@@ -3,6 +3,7 @@ export const bodyToUser = (body) => {
 
   return {
     email: body.email, //필수 
+    password: body.password,  //필수
     name: body.name, // 필수
     gender: body.gender, // 필수
     birth, // 필수
