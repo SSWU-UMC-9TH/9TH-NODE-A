@@ -9,7 +9,7 @@ import { handleAddMissionToStore, handleChallengeMission } from "./controllers/m
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 app.use(cors());                            // cors 방식 허용
 app.use(express.static('public'));          // 정적 파일 접근

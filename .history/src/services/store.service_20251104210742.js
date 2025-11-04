@@ -1,4 +1,5 @@
-import { responseFromStore, bodyToCreateStore, responseFromReviews } from "../dtos/store.dto.js";
+import { responseFromStore } from "../dtos/store.dto.js";
+import { bodyToCreateStore } from "../dtos/store.dto.js";
 import { findFirstUserId, findRegionById } from "../repositories/common.repository.js";
 import { createStore, getAllStoreReviews } from "../repositories/store.repository.js";
 
@@ -23,7 +24,7 @@ export const addStoreToRegion = async ({ regionId, body }) => {
   return responseFromStore(row);
 };
 
-export const listStoreReviews = async (storeId, cursor = 0) => {
-  const reviews = await getAllStoreReviews(storeId, cursor);
+export const listStoreReviews = async (storeId) => {
+  const reviews = await getAllStoreReviews(storeId);
   return responseFromReviews(reviews);
 };

@@ -1,5 +1,4 @@
 import { pool } from "../db.config.js";
-import { prisma } from "../db.config.js";
 
 export const createStore = async ({ name, address, regionId, foodCategoryId, createdByUserId }) => {
   const conn = await pool.getConnection();
@@ -24,22 +23,4 @@ export const findStoreById = async (storeId) => {
   } finally {
     conn.release();
   }
-};
-
-export const getAllStoreReviews = async (storeId, cursor = 0) => {
-  const reviews = await prisma.userStoreReview.findMany({
-    select: {
-      id: true,
-      content: true,
-      storeId: true,
-      userId: true,
-      store: true,
-      user: true,
-    },
-    where: { storeId, id: { gt: cursor } },
-    orderBy: { id: "asc" },
-    take: 5,
-  });
-
-  return reviews;
 };

@@ -1,5 +1,5 @@
 import { StatusCodes } from "http-status-codes";
-import { addStoreToRegion, listStoreReviews } from "../services/store.service.js";
+import { addStoreToRegion } from "../services/store.service.js";
 
 export const handleAddStoreToRegion = async (req, res, next) => {
   try {
@@ -12,12 +12,9 @@ export const handleAddStoreToRegion = async (req, res, next) => {
 };
 
 export const handleListStoreReviews = async (req, res, next) => {
-  try {
-    const storeId = parseInt(req.params.storeId);
-    const cursor = typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0;
-    const reviews = await listStoreReviews(storeId, cursor);
-    res.status(StatusCodes.OK).json(reviews);
-  } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
-  }
+  const reviews = await listStoreReviews(
+    parseInt(req.params.storeId),
+    typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0
+  );
+  res.status(StatusCodes.OK).success(reviews);
 };

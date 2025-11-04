@@ -2,14 +2,14 @@ import dotenv from "dotenv";
 import cors from 'cors';
 import express from "express";
 import { handleUserSignUp } from "./controllers/user.controller.js";
-import { handleAddStoreToRegion, handleListStoreReviews } from "./controllers/store.controller.js";
+import { handleAddStoreToRegion } from "./controllers/store.controller.js";
 import { handleAddReviewToStore } from "./controllers/review.controller.js";
 import { handleAddMissionToStore, handleChallengeMission } from "./controllers/mission.controller.js";
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 app.use(cors());                            // cors 방식 허용
 app.use(express.static('public'));          // 정적 파일 접근
@@ -37,6 +37,3 @@ app.post("/api/missions/:missionId/challenge", handleChallengeMission);
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
-
-// 가게에 속한 모든 리뷰를 조회
-app.get("/api/v1/stores/:storeId/reviews", handleListStoreReviews);
