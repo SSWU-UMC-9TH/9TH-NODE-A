@@ -1,7 +1,8 @@
 import { bodyToCreateMission, responseFromMission, responseFromUserMission } from "../dtos/mission.dto.js";
 import { findStoreById } from "../repositories/store.repository.js";
-import { createMission, findMissionById, isAlreadyChallenging, createUserMissionChallenge } from "../repositories/mission.repository.js";
+import { createMission, findMissionById, isAlreadyChallenging, createUserMissionChallenge, getMissionsByStore } from "../repositories/mission.repository.js";
 import { findFirstUserId } from "../repositories/common.repository.js";
+import { getMyChallengingMissions, completeMyChallenge } from "../repositories/mission.repository.js";
 
 export const addMissionToStore = async ({ storeId, body }) => {
   const store = await findStoreById(storeId);
@@ -35,3 +36,29 @@ export const challengeMission = async ({ missionId }) => {
   const row = await createUserMissionChallenge({ userId, missionId });
   return responseFromUserMission(row);
 };
+
+export const listStoreMissions = async (storeId, onlyActive = null, cursor = 0, take = 5) => {
+  const store = await findStoreById(storeId);
+  if (!store) throw new Error("가게가 존재하지 않습니다.");
+
+  const rows = await getMissionsByStore(storeId, onlyActive, cursor, take);
+  return { data: rows, pagination: { cursor: rows.length ? rows[rows.length - 1].id : null } };
+};
+
+export const listMyChallengingMissions = async (cursor = 0, take = 5, userIdFromReq) => {
+  const userId = userIdFromReq ?? (await findFirstUserId());
+  if (!userId) throw new Error("사용자가 없습니다. 먼저 사용자를 생성하세요.");
+
+  const rows = await getMyChallengingMissions(userId, cursor, take);
+  return { data: rows, pagination: { cursor: rows.length ? rows[rows.length - 1].id : null } };
+};
+
+export const completeMyMission = async ({ missionId, userIdFromReq }) => {
+  const userId = userIdFromReq ?? (await findFirstUserId());
+  if (!userId) throw new Error("사용자가 없습니다. 먼저 사용자를 생성하세요.");
+
+  const updated = await completeMyChallenge(userId, missionId);
+  if (!updated) throw new Error("진행 중인 미션이 아니거나 존재하지 않습니다.");
+  return updated;
+};
+

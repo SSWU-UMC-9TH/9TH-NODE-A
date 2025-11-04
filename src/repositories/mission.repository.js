@@ -1,55 +1,104 @@
-import { pool } from "../db.config.js";
+import { prisma } from "../db.config.js";
 
-export const createMission = async ({ storeId, title, description, rewardPoints, startDate, endDate, isActive }) => {
-  const conn = await pool.getConnection();
-  try {
-    const [res] = await conn.query(
-      `INSERT INTO mission (store_id, title, description, reward_points, start_date, end_date, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [storeId, title, description, rewardPoints, startDate, endDate, isActive ? 1 : 0]
-    );
-    const [rows] = await conn.query("SELECT * FROM mission WHERE id = ?", [res.insertId]);
-    return rows[0];
-  } finally {
-    conn.release();
-  }
+export const createMission = async ({
+  storeId,
+  title,
+  description,
+  rewardPoints,
+  startDate,
+  endDate,
+  isActive,
+}) => {
+  const row = await prisma.mission.create({
+    data: {
+      storeId,
+      title,
+      description,
+      rewardPoints,
+      startDate,
+      endDate,
+      isActive,
+    },
+  });
+  return row;
 };
 
 export const findMissionById = async (missionId) => {
-  const conn = await pool.getConnection();
-  try {
-    const [rows] = await conn.query("SELECT * FROM mission WHERE id = ?", [missionId]);
-    return rows[0] || null;
-  } finally {
-    conn.release();
-  }
+  return await prisma.mission.findUnique({
+    where: { id: missionId },
+  });
 };
 
 export const isAlreadyChallenging = async ({ userId, missionId }) => {
-  const conn = await pool.getConnection();
-  try {
-    const [rows] = await conn.query(
-      `SELECT 1 FROM user_mission_challenge
-       WHERE user_id = ? AND mission_id = ? AND status = 'CHALLENGING'`,
-      [userId, missionId]
-    );
-    return rows.length > 0;
-  } finally {
-    conn.release();
-  }
+  // 복합 유니크 키 기반 빠른 조회 (아래 schema 수정 참고)
+  const existing = await prisma.userMissionChallenge.findUnique({
+    where: {
+      userId_missionId: { userId, missionId },
+    },
+    select: { status: true },
+  });
+  return existing?.status === "CHALLENGING";
 };
 
 export const createUserMissionChallenge = async ({ userId, missionId }) => {
-  const conn = await pool.getConnection();
-  try {
-    const [res] = await conn.query(
-      `INSERT INTO user_mission_challenge (user_id, mission_id, status)
-       VALUES (?, ?, 'CHALLENGING')`,
-      [userId, missionId]
-    );
-    const [rows] = await conn.query("SELECT * FROM user_mission_challenge WHERE id = ?", [res.insertId]);
-    return rows[0];
-  } finally {
-    conn.release();
-  }
+  const row = await prisma.userMissionChallenge.create({
+    data: {
+      userId,
+      missionId,
+      status: "CHALLENGING",
+    },
+  });
+  return row;
+};
+
+export const getMissionsByStore = async (storeId, onlyActive = null, cursorId = 0, take = 5) => {
+  const where = { storeId, ...(onlyActive === null ? {} : { isActive: !!onlyActive }) };
+  return await prisma.mission.findMany({
+    where: cursorId ? { ...where, id: { lt: cursorId } } : where,
+    orderBy: [{ id: "desc" }],
+    take, // 기본 5
+    select: {
+      id: true, storeId: true, title: true, description: true,
+      rewardPoints: true, startDate: true, endDate: true,
+      isActive: true, createdAt: true,
+    },
+  });
+};
+
+export const getMyChallengingMissions = async (userId, cursorId = 0, take = 5) => {
+  const where = { userId, status: "CHALLENGING" };
+  return await prisma.userMissionChallenge.findMany({
+    where: cursorId ? { ...where, id: { lt: cursorId } } : where,
+    orderBy: [{ id: "desc" }],
+    take, // 기본 5
+    select: {
+      id: true, status: true, startedAt: true, missionId: true,
+      mission: {
+        select: {
+          id: true, title: true, description: true,
+          rewardPoints: true, startDate: true, endDate: true,
+          isActive: true, storeId: true,
+          store: { select: { id: true, name: true, address: true } },
+        },
+      },
+    },
+  });
+};
+
+export const completeMyChallenge = async (userId, missionId) => {
+  // 현재 진행중인 건만 업데이트
+  const { count } = await prisma.userMissionChallenge.updateMany({
+    where: { userId, missionId, status: "CHALLENGING" },
+    data: { status: "COMPLETED", completedAt: new Date() },
+  });
+  if (count === 0) return null;
+
+  // 변경 결과 반환
+  return prisma.userMissionChallenge.findUnique({
+    where: { userId_missionId: { userId, missionId } }, // @@unique([userId, missionId])
+    select: {
+      id: true, userId: true, missionId: true, status: true,
+      startedAt: true, completedAt: true,
+    },
+  });
 };

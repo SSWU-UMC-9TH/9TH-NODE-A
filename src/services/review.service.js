@@ -1,7 +1,7 @@
 import { bodyToCreateReview, responseFromReview } from "../dtos/review.dto.js";
 import { findFirstUserId } from "../repositories/common.repository.js";
 import { findStoreById } from "../repositories/store.repository.js";
-import { createReview } from "../repositories/review.repository.js";
+import { createReview, getMyReviews } from "../repositories/review.repository.js";
 
 export const addReviewToStore = async ({ storeId, body }) => {
   const store = await findStoreById(storeId);
@@ -23,4 +23,15 @@ export const addReviewToStore = async ({ storeId, body }) => {
     content: payload.content,
   });
   return responseFromReview(row);
+};
+
+export const listMyReviews = async (cursor = 0, take = 5, userIdFromReq) => {
+  const userId = userIdFromReq ?? (await findFirstUserId());
+  if (!userId) throw new Error("사용자가 없습니다. 먼저 사용자를 생성하세요.");
+
+  const rows = await getMyReviews(userId, cursor, take);
+  return {
+    data: rows,
+    pagination: { cursor: rows.length ? rows[rows.length - 1].id : null },
+  };
 };

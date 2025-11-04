@@ -3,8 +3,8 @@ import cors from 'cors';
 import express from "express";
 import { handleUserSignUp } from "./controllers/user.controller.js";
 import { handleAddStoreToRegion, handleListStoreReviews } from "./controllers/store.controller.js";
-import { handleAddReviewToStore } from "./controllers/review.controller.js";
-import { handleAddMissionToStore, handleChallengeMission } from "./controllers/mission.controller.js";
+import { handleAddReviewToStore, handleListMyReviews } from "./controllers/review.controller.js";
+import { handleListStoreMissions, handleAddMissionToStore, handleChallengeMission, handleListMyChallengingMissions, handleCompleteMyMission } from "./controllers/mission.controller.js";
 
 dotenv.config();
 
@@ -40,3 +40,16 @@ app.listen(port, () => {
 
 // 가게에 속한 모든 리뷰를 조회
 app.get("/api/v1/stores/:storeId/reviews", handleListStoreReviews);
+
+
+// 내가 작성한 리뷰 목록
+app.get("/api/me/reviews", handleListMyReviews);
+
+// 특정 가게의 미션 목록
+app.get("/api/stores/:storeId/missions", handleListStoreMissions);
+
+// 내가 진행 중인 미션 목록
+app.get("/api/me/missions/challenging", handleListMyChallengingMissions);
+
+// 내가 진행 중인 미션을 진행 완료로 바꾸기
+app.patch("/api/me/missions/:missionId/complete", handleCompleteMyMission);
