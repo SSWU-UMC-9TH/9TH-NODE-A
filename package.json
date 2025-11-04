@@ -1,0 +1,16 @@
+{
+  "name": "umc_week5",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "http-status-codes": "^2.3.0",
+    "mysql2": "^3.15.3"
+  }
+}
