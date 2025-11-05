@@ -3,8 +3,8 @@ import * as repo from "../repositories/store.repository.js";
 // 1-1
 export const createStore = async ({ regionId, name, address }) => {
   if (!name) throw new Error("가게 이름이 필요합니다.");
-  const exists = await repo.existsRegion(regionId);
-  if (!exists) throw new Error("해당 지역이 존재하지 않습니다.");
+  if (!(await repo.existsRegion(regionId)))
+    throw new Error("해당 지역이 존재하지 않습니다.");
   const id = await repo.insertStore({ regionId, name, address });
   return { storeId: id, regionId, name, address };
 };

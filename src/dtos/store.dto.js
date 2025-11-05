@@ -1,4 +1,3 @@
-// 요청 body → DB에서 쓸 형식으로 정리
 export const toCreateStoreDto = (params, body) => ({
   regionId: Number(params.regionId),
   name: body.name,

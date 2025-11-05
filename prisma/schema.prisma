@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AppUser {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique @db.VarChar(255)
+  passwordHash  String          @map("password_hash") @db.VarChar(255)
+  name          String?         @db.VarChar(100)
+  createdAt     DateTime?       @default(now()) @map("created_at")
+
+  reviews       AppReview[]
+  userMissions  AppUserMission[]
+
+  @@map("app_users")
+}
+
+model AppMission {
+  id            Int               @id @default(autoincrement())
+  title         String            @db.VarChar(255)
+  description   String?
+  rewardPoint   Int               @default(0) @map("reward_point")
+  createdAt     DateTime?         @default(now()) @map("created_at")
+
+  storeMissions AppStoreMission[]
+  userMissions  AppUserMission[]
+
+  @@map("app_missions")
+}
+
+model AppRegion {
+  id     Int        @id @default(autoincrement())
+  name   String     @unique @db.VarChar(100)
+  stores AppStore[]
+
+  @@map("app_regions")
+}
+
+model AppStore {
+  id        Int              @id @default(autoincrement())
+  regionId  Int              @map("region_id")
+  name      String           @db.VarChar(255)
+  address   String?
+  region    AppRegion        @relation(fields: [regionId], references: [id])
+  reviews   AppReview[]
+  missions  AppStoreMission[]
+
+  @@map("app_stores")
+}
+
+model AppReview {
+  id        Int        @id @default(autoincrement())
+  storeId   Int        @map("store_id")
+  userId    Int        @map("user_id")
+  content   String?
+  rating    Int
+  store     AppStore   @relation(fields: [storeId], references: [id])
+  user      AppUser    @relation(fields: [userId], references: [id])
+
+  @@map("app_reviews")
+}
+
+model AppStoreMission {
+  id         Int          @id @default(autoincrement())
+  storeId    Int          @map("store_id")
+  missionId  Int          @map("mission_id")
+  store      AppStore     @relation(fields: [storeId], references: [id])
+  mission    AppMission   @relation(fields: [missionId], references: [id])
+
+  @@unique([storeId, missionId])
+  @@map("app_store_missions")
+}
+
+model AppUserMission {
+  id         Int        @id @default(autoincrement())
+  userId     Int        @map("user_id")
+  missionId  Int        @map("mission_id")
+  status     String     @default("in_progress")
+  user       AppUser    @relation(fields: [userId], references: [id])
+  mission    AppMission @relation(fields: [missionId], references: [id])
+
+  @@unique([userId, missionId])
+  @@map("app_user_missions")
+}

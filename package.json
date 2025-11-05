@@ -4,13 +4,22 @@
   "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "dev": "node src/index.js"
+    "dev": "node src/index.js",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:reset": "prisma migrate reset",
+    "prisma:gen": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "http-status-codes": "^2.3.0",
-    "mysql2": "^3.15.3"
-  }
+    "mysql2": "^3.15.3",
+    "prisma": "^6.19.0"
+  },
+  "description": "**[태그] 제목의 형태**",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

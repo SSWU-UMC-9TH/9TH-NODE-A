@@ -1,75 +1,77 @@
-import { pool } from "../db.config.js";
+import { prisma } from "../prisma.js";
 
-// 1-1 지역 존재 확인 + 가게 추가
+// 1-1
 export const existsRegion = async (regionId) => {
-  const [rows] = await pool.query("SELECT 1 FROM app_regions WHERE id=?", [
-    regionId,
-  ]);
-  return rows.length > 0;
+  const region = await prisma.appRegion.findUnique({
+    where: { id: Number(regionId) },
+  });
+  return !!region;
 };
 export const insertStore = async ({ regionId, name, address }) => {
-  const [res] = await pool.query(
-    "INSERT INTO app_stores (region_id, name, address) VALUES (?, ?, ?)",
-    [regionId, name, address]
-  );
-  return res.insertId;
+  const created = await prisma.appStore.create({
+    data: { regionId: Number(regionId), name, address: address || null },
+  });
+  return created.id;
 };
 
-// 1-2 가게/유저 존재 확인 + 리뷰 추가
+// 1-2
 export const existsStore = async (storeId) => {
-  const [rows] = await pool.query("SELECT 1 FROM app_stores WHERE id=?", [
-    storeId,
-  ]);
-  return rows.length > 0;
+  const s = await prisma.appStore.findUnique({
+    where: { id: Number(storeId) },
+  });
+  return !!s;
 };
 export const existsUser = async (userId) => {
-  const [rows] = await pool.query("SELECT 1 FROM app_users WHERE id=?", [
-    userId,
-  ]);
-  return rows.length > 0;
+  const u = await prisma.appUser.findUnique({ where: { id: Number(userId) } });
+  return !!u;
 };
 export const insertReview = async ({ storeId, userId, content, rating }) => {
-  const [res] = await pool.query(
-    "INSERT INTO app_reviews (store_id, user_id, content, rating) VALUES (?, ?, ?, ?)",
-    [storeId, userId, content, rating]
-  );
-  return res.insertId;
+  const created = await prisma.appReview.create({
+    data: {
+      storeId: Number(storeId),
+      userId: Number(userId),
+      content: content || null,
+      rating: Number(rating),
+    },
+  });
+  return created.id;
 };
 
-// 1-3 가게/미션 존재 + 매핑
+// 1-3
 export const existsMission = async (missionId) => {
-  const [rows] = await pool.query("SELECT 1 FROM app_missions WHERE id=?", [
-    missionId,
-  ]);
-  return rows.length > 0;
+  const m = await prisma.appMission.findUnique({
+    where: { id: Number(missionId) },
+  });
+  return !!m;
 };
 export const existsStoreMission = async (storeId, missionId) => {
-  const [rows] = await pool.query(
-    "SELECT 1 FROM app_store_missions WHERE store_id=? AND mission_id=?",
-    [storeId, missionId]
-  );
-  return rows.length > 0;
+  const sm = await prisma.appStoreMission.findFirst({
+    where: { storeId: Number(storeId), missionId: Number(missionId) },
+  });
+  return !!sm;
 };
 export const insertStoreMission = async ({ storeId, missionId }) => {
-  const [res] = await pool.query(
-    "INSERT INTO app_store_missions (store_id, mission_id) VALUES (?, ?)",
-    [storeId, missionId]
-  );
-  return res.insertId;
+  const created = await prisma.appStoreMission.create({
+    data: { storeId: Number(storeId), missionId: Number(missionId) },
+  });
+  return created.id;
 };
 
-// 1-4 미션 도전
+// 1-4
 export const existsUserMission = async (userId, missionId) => {
-  const [rows] = await pool.query(
-    "SELECT 1 FROM app_user_missions WHERE user_id=? AND mission_id=?",
-    [userId, missionId]
-  );
-  return rows.length > 0;
+  const um = await prisma.appUserMission.findUnique({
+    where: {
+      userId_missionId: {
+        userId: Number(userId),
+        missionId: Number(missionId),
+      },
+    },
+  });
+  return !!um;
 };
 export const insertUserMission = async ({ userId, missionId }) => {
-  const [res] = await pool.query(
-    "INSERT INTO app_user_missions (user_id, mission_id) VALUES (?, ?)",
-    [userId, missionId]
-  );
-  return res.insertId;
+  const created = await prisma.appUserMission.create({
+    data: { userId: Number(userId), missionId: Number(missionId) },
+  });
+  return created.id;
 };
