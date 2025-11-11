@@ -16,6 +16,7 @@ datasource db {
 model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique(map: "email") @db.VarChar(255)
+  password  String   @map("password") @db.Char(60)
   name          String   @db.VarChar(100)
   gender        String   @db.VarChar(15)
   birth         DateTime @db.Date

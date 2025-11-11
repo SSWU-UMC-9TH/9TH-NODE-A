@@ -5,9 +5,9 @@ export const handleAddStoreToRegion = async (req, res, next) => {
   try {
     const regionId = Number(req.params.regionId);
     const result = await addStoreToRegion({ regionId, body: req.body });
-    res.status(StatusCodes.CREATED).json({ result });
+    return res.status(StatusCodes.CREATED).success(result);
   } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
+    return next(e);
   }
 };
 
@@ -16,8 +16,8 @@ export const handleListStoreReviews = async (req, res, next) => {
     const storeId = parseInt(req.params.storeId);
     const cursor = typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0;
     const reviews = await listStoreReviews(storeId, cursor);
-    res.status(StatusCodes.OK).json(reviews);
+    return res.status(StatusCodes.OK).success(reviews);
   } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
+    return next(e);
   }
 };

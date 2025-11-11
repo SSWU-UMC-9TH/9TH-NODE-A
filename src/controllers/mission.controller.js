@@ -1,28 +1,33 @@
 import { StatusCodes } from "http-status-codes";
-import { addMissionToStore, challengeMission, listStoreMissions, listMyChallengingMissions } from "../services/mission.service.js";
-import { completeMyMission } from "../services/mission.service.js";
+import {
+  addMissionToStore,
+  challengeMission,
+  listStoreMissions,
+  listMyChallengingMissions,
+  completeMyMission,
+} from "../services/mission.service.js";
 
-export const handleAddMissionToStore = async (req, res) => {
+export const handleAddMissionToStore = async (req, res, next) => {
   try {
     const storeId = Number(req.params.storeId);
     const result = await addMissionToStore({ storeId, body: req.body });
-    res.status(StatusCodes.CREATED).json({ result });
+    return res.status(StatusCodes.CREATED).success(result);
   } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
+    return next(e);
   }
 };
 
-export const handleChallengeMission = async (req, res) => {
+export const handleChallengeMission = async (req, res, next) => {
   try {
     const missionId = Number(req.params.missionId);
     const result = await challengeMission({ missionId });
-    res.status(StatusCodes.CREATED).json({ result });
+    return res.status(StatusCodes.CREATED).success(result);
   } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
+    return next(e);
   }
 };
 
-export const handleListStoreMissions = async (req, res) => {
+export const handleListStoreMissions = async (req, res, next) => {
   try {
     const storeId = Number(req.params.storeId);
     const activeParam = typeof req.query.active === "string" ? req.query.active : null;
@@ -31,34 +36,32 @@ export const handleListStoreMissions = async (req, res) => {
     const take   = Number.isFinite(Number(req.query?.take))   ? Number(req.query.take)   : 5;
 
     const result = await listStoreMissions(storeId, onlyActive, cursor, take);
-    res.status(200).json(result);
+    return res.status(StatusCodes.OK).success(result);
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    return next(e);
   }
 };
 
-export const handleListMyChallengingMissions = async (req, res) => {
+export const handleListMyChallengingMissions = async (req, res, next) => {
   try {
     const cursor = Number.isFinite(Number(req.query?.cursor)) ? Number(req.query.cursor) : 0;
     const take   = Number.isFinite(Number(req.query?.take))   ? Number(req.query.take)   : 5;
-
     const result = await listMyChallengingMissions(cursor, take, undefined);
-    res.status(200).json(result);
+    return res.status(StatusCodes.OK).success(result);
   } catch (e) {
-    res.status(400).json({ message: e.message });
+    return next(e);
   }
 };
 
-export const handleCompleteMyMission = async (req, res) => {
+export const handleCompleteMyMission = async (req, res, next) => {
   try {
     const missionId = Number(req.params.missionId);
     const result = await completeMyMission({ missionId, userIdFromReq: undefined });
-
-    res.status(StatusCodes.OK).json({
+    return res.status(StatusCodes.OK).success({
       message: "미션이 진행 완료로 변경되었습니다.",
       challenge: result,
     });
   } catch (e) {
-    res.status(StatusCodes.BAD_REQUEST).json({ message: e.message });
+    return next(e);
   }
 };
