@@ -10,3 +10,4 @@ node_modules
 
 # 환경 변수 파일 (보안상 필수!)
 .env
+/src/generated/prisma

@@ -1,41 +1,68 @@
 import { StatusCodes } from "http-status-codes";
-import { signUpUser } from '../services/user.service.js';
-// import { responseFromUser } from '../dtos/user.dto.js'; // DTO 함수는 사용자 응답에 필요
+import { signUpUser, getReviewsByUserId, isUserExist } from "../services/user.service.js";
 
-/**
- * 회원 가입 API 핸들러
- * POST /api/v1/users/signup
- */
 export const handleUserSignUp = async (req, res, next) => {
-    // 요청 바디에서 모든 데이터를 가져옵니다.
-    const userData = req.body; 
-    
-    try {
-        // Service 호출 (이메일 중복 검증, 해싱, DB 삽입 포함)
-        const newUserData = await signUpUser(userData);
-        
-        // DTO로 최종 응답 형식을 변환한다고 가정하고, 여기서는 직접 반환
-        // const responseData = responseFromUser(newUserData, null); 
+  try {
+    const newUser = await signUpUser(req.body);
 
-        res.status(StatusCodes.CREATED).json({ // 201 Created 사용
-            "success": true,
-            "code": "S201",
-            "message": "회원가입이 완료되었습니다.",
-            "data": {
-                "id": newUserData.user_id,
-                "name": newUserData.name
-            }
-        });
-    } catch (error) {
-        // M409 중복 오류 처리 (409 Conflict)
-        if (error.message.startsWith("M409")) {
-            return res.status(StatusCodes.CONFLICT).json({ 
-                "success": false,
-                "code": "M409",
-                "message": "이미 존재하는 이메일입니다."
-            });
-        }
-        // 그 외 서버 오류는 최종 에러 핸들러로 전달
-        next(error); 
+    res.status(StatusCodes.CREATED).json({
+      success: true,
+      code: "S201",
+      message: "회원가입이 완료되었습니다.",
+      data: {
+        id: newUser.id,          // user_id 아님
+        name: newUser.name,
+        email: newUser.email,
+      },
+    });
+  } catch (error) {
+    // Prisma의 중복 에러(P2002)나 커스텀 에러 메시지 모두 처리
+    if (error.code === "P2002" || String(error.message).startsWith("M409")) {
+      return res.status(StatusCodes.CONFLICT).json({
+        success: false,
+        code: "M409",
+        message: "이미 존재하는 이메일입니다.",
+      });
     }
+    next(error);
+  }
+};
+
+// 사용자 작성 리뷰 목록 조회
+export const handleGetUserReviews = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    console.log(`[DEBUG] Received userId: ${userId}`);
+
+    const page = parseInt(req.query.page) || 1;
+    const size = parseInt(req.query.size) || 10;
+
+    // 입력값 유효성 검사 (page, size는 양수)
+    if (page < 1 || size < 1) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        code: "M400",
+        message: "페이지 번호와 크기는 1 이상이어야 합니다.",
+      });
+    }
+
+    const reviews = await getReviewsByUserId(userId, { page, size });
+
+    res.status(StatusCodes.OK).json({
+      success: true,
+      code: "S200",
+      message: "사용자 리뷰 목록 조회 성공",
+      data: reviews,
+    });
+  } catch (error) {
+    if (String(error.message).startsWith("M404")) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        success: false,
+        code: "M404",
+        message: "사용자를 찾을 수 없습니다.",
+      });
+    }
+    next(error);
+  }
 };

@@ -1,23 +1,47 @@
-import * as MissionRepo from '../repositories/mission.repository.js';
+import prisma from "../db.config.js";
+import {
+    isMissionAlreadyChallenged,
+    startNewChallenge,
+} from "../repositories/mission.repository.js";
+import { isStoreExist } from "../repositories/store.repository.js";
 
 /**
- * 미션 도전을 시작하는 서비스 로직
- * @param {number} userId
- * @param {number} missionId
- * @returns {number} challengeId
- * @throws {Error} 이미 도전 중일 경우 (M409)
+ * 사용자가 미션에 도전하기
+ * (이미 도전 중이면 M409 에러)
  */
 export const challengeMission = async (userId, missionId) => {
-    // 1. 중복 도전 검증
-    const isChallenged = await MissionRepo.isMissionAlreadyChallenged(userId, missionId);
-    
-    if (isChallenged) {
-        // 이미 도전 중인 경우, 409 Conflict 오류 코드를 포함하여 에러를 던집니다.
-        throw new Error("M409: 이미 도전 중인 미션입니다.");
+    // 1️⃣ 이미 도전 중인지 확인
+    const already = await isMissionAlreadyChallenged(userId, missionId);
+    if (already) {
+        const err = new Error("M409: 이미 도전 중인 미션입니다.");
+        throw err;
     }
 
-    // 2. 미션 도전 시작 (DB에 기록)
-    const challengeId = await MissionRepo.startNewChallenge(userId, missionId);
-    
+    // 2️⃣ 새 도전 등록
+    const challengeId = await startNewChallenge(userId, missionId);
     return challengeId;
+};
+
+/**
+ * 특정 가게에 미션 추가
+ * (가게 존재 여부 확인 후 생성)
+ */
+export const addMissionToStore = async (storeId, missionData) => {
+    const exists = await isStoreExist(storeId);
+    if (!exists) {
+        const err = new Error("M404: store not found");
+        throw err;
+    }
+
+    const created = await prisma.mission.create({
+        data: {
+            storeId: Number(storeId),
+            title: missionData.title || missionData.name, // 이름 필드 둘 다 지원
+            description: missionData.description ?? null,
+            reward: missionData.reward ?? null,
+        },
+        select: { id: true },
+    });
+
+    return created.id;
 };

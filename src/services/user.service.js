@@ -1,39 +1,74 @@
-import * as UserRepo from '../repositories/user.repository.js';
-// import bcrypt from 'bcrypt'; // 비밀번호 해싱 라이브러리를 사용한다고 가정
+import prisma from "../db.config.js"; // 단일 인스턴스 사용
 
-const SALT_ROUNDS = 10; // 해싱 강도
+export async function signUpUser(payload) {
+  const {
+    email,
+    name,
+    gender,
+    birth, // birth는 "YYYY-MM-DD" 형태의 문자열이라고 가정
+    address,
+    detailAddress,
+    phoneNumber,
+  } = payload;
 
-/**
- * 회원 가입 서비스 로직
- * @param {Object} userData - 가입 요청 데이터
- * @returns {Object} 가입된 사용자 정보 DTO
- * @throws {Error} 이메일이 이미 존재할 경우
- */
-export const signUpUser = async (userData) => {
-    // 1. 이메일 중복 검증
-    const exists = await UserRepo.isEmailExist(userData.email);
-    if (exists) {
-        throw new Error("M409: 이미 존재하는 이메일입니다.");
-    }
+  // 1) 중복 체크 (스키마에 email @unique 있음)
+  const exists = await prisma.user.findUnique({ where: { email } });
+  if (exists) {
+    // Controller에서 처리되도록 에러 던지기
+    const err = new Error("M409: duplicate email");
+    throw err;
+  }
 
-    // 2. 비밀번호 해싱 (보안 필수)
-    // const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
-    
-    // 테스트를 위해 해싱 생략하고, 임시 해시 값 사용
-    const hashedPassword = `hashed_${userData.password}`; 
+  // 2) 생성
+  const newUser = await prisma.user.create({
+    data: {
+      email,
+      name,
+      gender,
+      birth: new Date(birth),
+      address,
+      detailAddress: detailAddress ?? null, // nullable
+      phoneNumber,
+    },
+    // 필요한 필드만 선택하고 싶다면 select 사용 가능
+    // select: { id: true, name: true, email: true }
+  });
 
-    const dataToInsert = {
-        email: userData.email,
-        password_hash: hashedPassword,
-        name: userData.user_name // 요청 바디의 user_name을 사용
-    };
+  return newUser;
+}
 
-    // 3. 사용자 데이터 삽입 및 ID 획득
-    const userId = await UserRepo.insertUser(dataToInsert);
+export const isUserExist = async (userId) => {
+  const id = Number(userId);
+  const n = await prisma.user.count({ where: { id } });
+  return n > 0;
+};
 
-    // 4. 응답 DTO를 위한 데이터 반환 (user.dto.js에서 사용할 정보)
-    return {
-        user_id: userId,
-        name: userData.user_name
-    };
+export const getReviewsByUserId = async (userId, { page, size }) => {
+  const id = Number(userId);
+
+  const skip = (page - 1) * size;
+  const take = size;
+
+  // Prisma를 사용하여 해당 userId로 작성된 모든 리뷰를 찾습니다.
+  const reviews = await prisma.review.findMany({
+    where: {
+      userId: id,
+    },
+    // 페이지네이션 적용
+    skip: skip,
+    take: take,
+    // 최신 정렬
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      store: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+
+  return reviews;
 };

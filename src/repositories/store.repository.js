@@ -1,72 +1,80 @@
-import { pool } from "../db.config.js";
+import prisma from "../db.config.js";
 
-/**
- * 특정 지역 ID가 존재하는지 확인
- */
+
+// 특정 지역 ID가 존재하는지 확인
 export const isRegionExist = async (regionId) => {
-    const conn = await pool.getConnection();
-    try {
-        const [rows] = await conn.query(
-            "SELECT 1 FROM region WHERE id = ?;",
-            [regionId]
-        );
-        return rows.length > 0;
-    } finally {
-        conn.release();
-    }
+    const id = Number(regionId);
+    const n = await prisma.region.count({ where: { id } });
+    return n > 0;
 };
 
-/**
- * 특정 가게 ID가 존재하는지 확인
- */
+/* 특정 가게 ID가 존재하는지 확인 */
 export const isStoreExist = async (storeId) => {
-    const conn = await pool.getConnection();
-    try {
-        const [rows] = await conn.query(
-            "SELECT 1 FROM store WHERE id = ?;",
-            [storeId]
-        );
-        return rows.length > 0;
-    } finally {
-        conn.release();
-    }
+    const id = Number(storeId);
+    const n = await prisma.store.count({ where: { id } });
+    return n > 0;
 };
 
-/**
- * 가게 정보 삽입
- */
+// 지역 정보 삽입
+export const insertRegion = async (name) => {
+    const created = await prisma.region.create({
+        data: { name },
+        select: { id: true },
+    });
+    return created.id;
+};
+
+/* 가게 정보 삽입 */
 export const insertStore = async (regionId, storeData) => {
-    const conn = await pool.getConnection();
-    try {
-        const [result] = await conn.query(
-            "INSERT INTO store (region_id, name, address, category_id, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?);",
-            [
-                regionId, 
-                storeData.name, 
-                storeData.address, 
-                storeData.category_id, 
-                storeData.latitude, 
-                storeData.longitude
-            ]
-        );
-        return result.insertId;
-    } finally {
-        conn.release();
-    }
+    const created = await prisma.store.create({
+        data: {
+            regionId: Number(regionId),
+            name: storeData.name,
+            address: storeData.address ?? null,
+            categoryId: storeData.category_id ?? null,
+            latitude: storeData.latitude ?? null,
+            longitude: storeData.longitude ?? null,
+        },
+        select: { id: true },
+    });
+    return created.id;
 };
 
 /**
  * 리뷰 삽입 (review 테이블 구조 반영: mission_id NOT NULL 가정)
  */
 export const insertReview = async (storeId, userId, missionId, rating, content) => {
-    const conn = await pool.getConnection();
-    try {
-        const [result] = await conn.query(
-            "INSERT INTO review (store_id, user_id, mission_id, rating, content) VALUES (?, ?, ?, ?, ?);",
-            [storeId, userId, missionId, rating, content] 
-        );
-        return result.insertId;
-    } finally {
-        conn.release();
-    }
+    const created = await prisma.review.create({
+        data: {
+            storeId: Number(storeId),
+            userId: Number(userId),
+            missionId: Number(missionId),
+            content: String(content),
+        },
+        select: { id: true },
+    });
+    return created.id;
+};
+
+// 특정 가게 활성 미션 목록 조회
+export const getMissionsByStoreId = async (storeId, { page, size }) => {
+    const id = Number(storeId); 
+    const skip = (page - 1) * size;
+    const take = size; 
+
+    // 미션 목록 조회
+    const missions = await prisma.mission.findMany({
+        where: {
+            storeId: id,
+            isActive: true, // 활성 미션만 조회
+        },
+        skip: skip,
+        take: take, 
+        orderBy: {
+            id: 'asc',
+        },
+        // 필요한 경우 여기에 include를 추가하여 관련된 정보를 포함할 수 있습니다.
+    });
+
+    return missions;
 };

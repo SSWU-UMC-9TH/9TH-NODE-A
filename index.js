@@ -1,39 +1,37 @@
-import 'dotenv/config'; //환경 변수를 서버 최상단에서 로드합니다.
+import 'dotenv/config'; 
+import 'express-async-errors';
 import express from 'express';
 import cors from 'cors';
+import prisma from "./src/db.config.js";
+
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json()); 
+app.use(cors());
+app.use(express.urlencoded({ extended: false }));
+
+app.use((req, res, next) => {
+  console.log(`[IN] ${req.method} ${req.url}`);
+  next();
+});
+
 
 // 라우터 파일들을 가져옵니다. (경로 확인 필수: './src/routes/' 폴더를 가정)
 import storeRouter from './src/routes/store.router.js'; 
 import userRouter from './src/routes/user.router.js'; 
 
-const app = express();
-const port = process.env.PORT || 3000;
 
-// --- 미들웨어 설정 ---
+app.use('/api/v1', userRouter);
+app.use('/api/v1', storeRouter);
 
-app.use(express.json()); // JSON 형태의 요청 본문(req.body) 파싱
-app.use(cors());
-app.use(express.urlencoded({ extended: false }));
-
-
-// --- 라우터 연결 (API Path 설계 반영) ---
-
-// 1. 사용자 관련 API 연결 (회원가입, 미션 도전)
-// 최종 경로: POST /api/v1/users/signup, POST /api/v1/users/:userId/challenges
-app.use('/api/v1/users', userRouter); 
-
-// 2. 가게 및 지역 관련 API 연결 (가게 추가, 리뷰 추가, 미션 추가)
-// 최종 경로: POST /api/v1/regions/1/stores
-app.use('/api/v1/regions', storeRouter); 
-
-// 최종 경로: POST /api/v1/stores/1/reviews
-app.use('/api/v1/stores', storeRouter); 
-
-
-// --- 에러 핸들러 (최종 미들웨어) ---
 
 app.use((err, req, res, next) => {
-    console.error(err.stack); 
+    console.error('--- EXPRESS ERROR HANDLER ---');
+    console.error(err); 
+    console.error('-----------------------------');
+
     res.status(500).json({
         success: false,
         code: "G500",

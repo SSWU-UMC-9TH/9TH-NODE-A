@@ -1,23 +1,18 @@
-import { isStoreExist, insertReview } from '../repositories/store.repository.js';
+import { isStoreExist } from "../repositories/store.repository.js";
+import { insertReview } from "../repositories/review.repository.js"; // 없으면 store.repository에 있는 RAW/ORM 사용
 
-export const addReviewToStore = async (storeId, reviewData) => {
-    
-    // 1. 가게 존재 검증
-    const exists = await isStoreExist(storeId); 
-    
+export async function addReviewToStore(storeId, reviewData) {
+    const exists = await isStoreExist(storeId);
     if (!exists) {
-        throw new Error("M404: 해당 가게를 찾을 수 없습니다.");
+        const e = new Error("M404: store not found");
+        throw e;
     }
-
-    // 2. 리뷰 삽입
-    // mission_id가 reviewData에 포함되어 있다고 가정하고 Repository로 전달합니다.
-    const reviewId = await insertReview( 
+    // reviewData: { userId, missionId?, rating, content }
+    return insertReview(
         storeId,
-        reviewData.user_id,
-        reviewData.mission_id,
+        reviewData.userId,
+        reviewData.missionId,
         reviewData.rating,
-        reviewData.content
+        reviewData.content ?? ""
     );
-
-    return reviewId;
-};
+}
