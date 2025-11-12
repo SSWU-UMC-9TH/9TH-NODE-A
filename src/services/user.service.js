@@ -1,7 +1,16 @@
 import * as repo from "../repositories/user.repository.js";
+import {
+  UserNotFoundError,
+  UserMissionNotFoundError,
+  AlreadyCompletedError,
+} from "../errors.js";
 
 export const listMyReviews = async (userId) => {
   const rows = await repo.findUserReviews(userId);
+  if (rows.length === 0) {
+    throw new UserNotFoundError(userId);
+  }
+
   return rows.map((r) => ({
     id: r.id,
     content: r.content,
@@ -29,6 +38,11 @@ export const listMyInProgressMissions = async (userId) => {
 };
 
 export const completeMyMission = async (userId, missionId) => {
+  const current = await repo.findUserMission(userId, missionId);
+  if (!current) throw new UserMissionNotFoundError({ userId, missionId });
+  if (current.status === "completed")
+    throw new AlreadyCompletedError({ userId, missionId });
+
   const updated = await repo.completeUserMission(userId, missionId);
   return {
     userId: updated.userId,

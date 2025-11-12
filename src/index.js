@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import morgan from "morgan";
+import cookieParser from "cookie-parser";
 dotenv.config();
 
 import {
@@ -22,6 +24,28 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// 공통 응답 헬퍼 등록
+app.use((req, res, next) => {
+  res.success = (success) =>
+    res.json({ resultType: "SUCCESS", error: null, success });
+
+  res.error = ({ errorCode = "unknown", reason = null, data = null }) =>
+    res.json({
+      resultType: "FAIL",
+      error: { errorCode, reason, data },
+      success: null,
+    });
+
+  next();
+});
+
+// 공용 미들웨어
+app.use(morgan("dev"));
+app.use(cookieParser());
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 // 기본 라우트
 app.get("/", (req, res) => res.send("UMC Week6"));
 
@@ -40,9 +64,15 @@ app.patch(
   completeMission
 );
 
+// 전역 에러 핸들러 (공통 FAIL 포맷으로)
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(400).json({ error: err.message ?? "Bad Request" });
+  if (res.headersSent) return next(err);
+
+  res.status(err.statusCode || 500).error({
+    errorCode: err.errorCode || "unknown",
+    reason: err.reason || err.message || null,
+    data: err.data || null,
+  });
 });
 
 // 서버 실행

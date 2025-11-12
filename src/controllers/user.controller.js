@@ -4,7 +4,7 @@ import * as service from "../services/user.service.js";
 export const getMyReviews = async (req, res, next) => {
   try {
     const data = await service.listMyReviews(Number(req.params.userId));
-    res.status(StatusCodes.OK).json({ data });
+    res.status(StatusCodes.OK).success({ data });
   } catch (e) {
     next(e);
   }
@@ -13,7 +13,7 @@ export const getMyReviews = async (req, res, next) => {
 export const getStoreMissions = async (req, res, next) => {
   try {
     const data = await service.listStoreMissions(Number(req.params.storeId));
-    res.status(StatusCodes.OK).json({ data });
+    res.status(StatusCodes.OK).success({ data });
   } catch (e) {
     next(e);
   }
@@ -24,7 +24,7 @@ export const getMyInProgressMissions = async (req, res, next) => {
     const data = await service.listMyInProgressMissions(
       Number(req.params.userId)
     );
-    res.status(StatusCodes.OK).json({ data });
+    res.status(StatusCodes.OK).success({ data });
   } catch (e) {
     next(e);
   }
@@ -36,7 +36,7 @@ export const completeMission = async (req, res, next) => {
       Number(req.params.userId),
       Number(req.params.missionId)
     );
-    res.status(StatusCodes.OK).json(result);
+    res.status(StatusCodes.OK).success(result);
   } catch (e) {
     next(e);
   }
