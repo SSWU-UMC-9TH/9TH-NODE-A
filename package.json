@@ -1,0 +1,25 @@
+{
+  "name": "umc-node-project",
+  "version": "1.0.0",
+  "description": "UMC Node.js Backend API",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "client": "^0.0.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
+    "express-async-error": "^0.0.2",
+    "express-async-errors": "^3.1.1",
+    "http-status-codes": "^2.3.0",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.15.3",
+    "prisma": "^6.19.0"
+  }
+}
