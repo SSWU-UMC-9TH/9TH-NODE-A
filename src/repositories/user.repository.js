@@ -42,3 +42,15 @@ export const completeUserMission = async (userId, missionId) => {
     data: { status: "completed" },
   });
 };
+
+// 5-2. 특정 유저-미션 조합 조회 (존재 여부 확인용)
+export const findUserMission = async (userId, missionId) => {
+  return prisma.appUserMission.findUnique({
+    where: {
+      userId_missionId: {
+        userId: Number(userId),
+        missionId: Number(missionId),
+      },
+    },
+  });
+};

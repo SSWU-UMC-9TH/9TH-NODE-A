@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import swaggerAutogen from "swagger-autogen";
+import swaggerUiExpress from "swagger-ui-express";
 dotenv.config();
 
 import {
@@ -45,6 +47,46 @@ app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Swagger UI 세팅
+app.use(
+  "/docs",
+  swaggerUiExpress.serve,
+  swaggerUiExpress.setup(
+    {},
+    {
+      swaggerOptions: {
+        url: "/openapi.json",
+      },
+    }
+  )
+);
+
+// Swagger 문서 JSON 동적 생성
+app.get("/openapi.json", async (req, res, next) => {
+  // #swagger.ignore = true   // 이 라우트는 Swagger 목록에서 숨김
+  try {
+    const options = {
+      openapi: "3.0.0",
+      disableLogs: true,
+      writeOutputFile: false,
+    };
+    const outputFile = "/dev/null"; // 실제 파일은 생성 안 함
+    const routes = ["./src/index.js"]; // 라우트 정의가 들어있는 파일
+    const doc = {
+      info: {
+        title: "UMC Week6/7/8 API",
+        description: "UMC 9th Node.js + Prisma 테스트 프로젝트입니다.",
+      },
+      host: "localhost:3001", // 사용 중인 포트
+    };
+
+    const result = await swaggerAutogen(options)(outputFile, routes, doc);
+    res.json(result ? result.data : null);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // 기본 라우트
 app.get("/", (req, res) => res.send("UMC Week6"));
