@@ -11,10 +11,17 @@ import { handleAddStoreToRegion, handleListStoreReviews } from "./controllers/st
 import { handleAddReviewToStore, handleListMyReviews } from "./controllers/review.controller.js";
 import { handleListStoreMissions, handleAddMissionToStore, handleChallengeMission, handleListMyChallengingMissions, handleCompleteMyMission } from "./controllers/mission.controller.js";
 
+import passport from "passport";
+import { googleStrategy, jwtStrategy } from "./auth.config.js";
+import { prisma } from "./db.config.js";
+
 dotenv.config();
 
+passport.use(googleStrategy);
+passport.use(jwtStrategy); 
+
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 /**
  * 공통 응답을 사용할 수 있는 헬퍼 함수 등록
@@ -100,6 +107,49 @@ app.use((err, req, res, next) => {
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
+// Google OAuth2.0 로그인 시작점
+app.get("/oauth2/login/google", 
+  passport.authenticate("google", { 
+    session: false 
+  })
+);
+app.get(
+  "/oauth2/callback/google",
+  passport.authenticate("google", {
+	  session: false,
+    failureRedirect: "/login-failed",
+  }),
+  (req, res) => {
+    const tokens = req.user; 
+
+    res.status(200).json({
+      resultType: "SUCCESS",
+      error: null,
+      success: {
+          message: "Google 로그인 성공!",
+          tokens: tokens, // { "accessToken": "...", "refreshToken": "..." }
+      }
+    });
+  }
+);
+
+app.use(cors()); // cors 방식 허용
+app.use(express.static("public")); // 정적 파일 접근
+app.use(express.json()); // request의 본문을 json으로 해석할 수 있도록 함 (JSON 형태의 요청 body를 파싱하기 위함)
+app.use(express.urlencoded({ extended: false })); // 단순 객체 문자열 형태로 본문 데이터 해석
+
+app.use(passport.initialize());
+
+const isLogin = passport.authenticate('jwt', { session: false });
+
+app.get('/mypage', isLogin, (req, res) => {
+  res.status(200).success({
+    message: `인증 성공! ${req.user.name}님의 마이페이지입니다.`,
+    user: req.user,
+  });
+});
+
 
 // Swagger 자동 생성기 설정
 app.use(
