@@ -14,6 +14,25 @@ export const bodyToUser = (body) => {
   };
 };
 
+// 내 정보 수정용 DTO (부분 업데이트 허용)
+export const bodyToUserProfileUpdate = (body) => {
+  const patch = {};
+
+  if (body.name !== undefined) patch.name = body.name;
+  if (body.gender !== undefined) patch.gender = body.gender;
+  if (body.birth !== undefined)  patch.birth = new Date(body.birth);
+  if (body.address !== undefined) patch.address = body.address || "";
+  if (body.detailAddress !== undefined) patch.detailAddress = body.detailAddress || "";
+  if (body.phoneNumber !== undefined) patch.phoneNumber = body.phoneNumber;
+
+  // 선호 카테고리 ID 배열
+  if (Array.isArray(body.preferences)) {
+    patch.preferences = body.preferences;
+  }
+
+  return patch;
+};
+
 export const responseFromUser = ({ user, preferences }) => {
   const preferFoods = preferences.map(
     (preference) => preference.foodCategory.name

@@ -15,7 +15,6 @@ import {
   MissingUserError,
   AlreadyChallengingError,
 } from "../errors.js";
-import { findFirstUserId } from "../repositories/common.repository.js";
 
 export const addMissionToStore = async ({ storeId, body }) => {
   const store = await findStoreById(storeId);
@@ -36,11 +35,10 @@ export const addMissionToStore = async ({ storeId, body }) => {
   return responseFromMission(row);
 };
 
-export const challengeMission = async ({ missionId }) => {
+export const challengeMission = async ({ missionId, userId }) => {
   const mission = await findMissionById(missionId);
   if (!mission) throw new NotFoundError("도전할 미션이 존재하지 않습니다.", { missionId });
 
-  const userId = await findFirstUserId();
   if (!userId) throw new MissingUserError();
 
   const already = await isAlreadyChallenging({ userId, missionId });
@@ -58,16 +56,14 @@ export const listStoreMissions = async (storeId, onlyActive = null, cursor = 0, 
   return { data: rows, pagination: { cursor: rows.length ? rows[rows.length - 1].id : null } };
 };
 
-export const listMyChallengingMissions = async (cursor = 0, take = 5, userIdFromReq) => {
-  const userId = userIdFromReq ?? (await findFirstUserId());
+export const listMyChallengingMissions = async (cursor = 0, take = 5, userId) => {
   if (!userId) throw new MissingUserError();
 
   const rows = await getMyChallengingMissions(userId, cursor, take);
   return { data: rows, pagination: { cursor: rows.length ? rows[rows.length - 1].id : null } };
 };
 
-export const completeMyMission = async ({ missionId, userIdFromReq }) => {
-  const userId = userIdFromReq ?? (await findFirstUserId());
+export const completeMyMission = async ({ missionId, userId }) => {
   if (!userId) throw new MissingUserError();
 
   const updated = await completeMyChallenge(userId, missionId);

@@ -1,14 +1,12 @@
 import { bodyToCreateReview, responseFromReview } from "../dtos/review.dto.js";
-import { findFirstUserId } from "../repositories/common.repository.js";
 import { findStoreById } from "../repositories/store.repository.js";
 import { createReview, getMyReviews } from "../repositories/review.repository.js";
 import { MissingUserError, NotFoundError, ValidationError } from "../errors.js";
 
-export const addReviewToStore = async ({ storeId, body }) => {
+export const addReviewToStore = async ({ storeId, body, userId }) => {
   const store = await findStoreById(storeId);
   if (!store) throw new NotFoundError("리뷰를 달 가게가 존재하지 않습니다.", { storeId });
 
-  const userId = await findFirstUserId();
   if (!userId) throw new MissingUserError();
 
   const payload = bodyToCreateReview(body);
@@ -26,8 +24,7 @@ export const addReviewToStore = async ({ storeId, body }) => {
   return responseFromReview(row);
 };
 
-export const listMyReviews = async (cursor = 0, take = 5, userIdFromReq) => {
-  const userId = userIdFromReq ?? (await findFirstUserId());
+export const listMyReviews = async (cursor = 0, take = 5, userId) => {
   if (!userId) throw new MissingUserError();
 
   const rows = await getMyReviews(userId, cursor, take);

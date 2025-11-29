@@ -127,7 +127,8 @@ export const handleAddMissionToStore = async (req, res, next) => {
 export const handleChallengeMission = async (req, res, next) => {
   try {
     const missionId = Number(req.params.missionId);
-    const result = await challengeMission({ missionId });
+    const userId = req.user.id;
+    const result = await challengeMission({ missionId, userId });
     return res.status(StatusCodes.CREATED).success(result);
   } catch (e) {
     return next(e);
@@ -329,7 +330,9 @@ export const handleListMyChallengingMissions = async (req, res, next) => {
   try {
     const cursor = Number.isFinite(Number(req.query?.cursor)) ? Number(req.query.cursor) : 0;
     const take   = Number.isFinite(Number(req.query?.take))   ? Number(req.query.take)   : 5;
-    const result = await listMyChallengingMissions(cursor, take, undefined);
+    const userId = req.user.id;
+
+    const result = await listMyChallengingMissions(cursor, take, userId);
     return res.status(StatusCodes.OK).success(result);
   } catch (e) {
     return next(e);
@@ -435,7 +438,8 @@ export const handleListMyChallengingMissions = async (req, res, next) => {
 export const handleCompleteMyMission = async (req, res, next) => {
   try {
     const missionId = Number(req.params.missionId);
-    const result = await completeMyMission({ missionId, userIdFromReq: undefined });
+    const userId = req.user.id;
+    const result = await completeMyMission({ missionId, userId });
     return res.status(StatusCodes.OK).success({
       message: "미션이 진행 완료로 변경되었습니다.",
       challenge: result,

@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
-import { bodyToUser } from "../dtos/user.dto.js";
-import { userSignUp } from "../services/user.service.js";
+import { bodyToUser, bodyToUserProfileUpdate } from "../dtos/user.dto.js";
+import { userSignUp, updateMyProfile } from "../services/user.service.js";
 
 export const handleUserSignUp = async (req, res, next) => {
   console.log("회원가입을 요청했습니다!");
@@ -170,4 +170,16 @@ export const handleUserSignUp = async (req, res, next) => {
       }
     }
   */
+};
+
+// 내 정보 수정 API
+export const handleUpdateMyProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;  // isLogin 미들웨어로부터 옴
+    const payload = bodyToUserProfileUpdate(req.body);
+    const user = await updateMyProfile(userId, payload);
+    return res.status(StatusCodes.OK).success(user);
+  } catch (e) {
+    return next(e);
+  }
 };

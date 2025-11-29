@@ -5,6 +5,8 @@ import {
   getUser,
   getUserPreferencesByUserId,
   setPreference,
+  updateUser,
+  replacePreferences,
 } from "../repositories/user.repository.js";
 import bcrypt from "bcryptjs";
 
@@ -39,4 +41,26 @@ export const userSignUp = async (data) => {
   const preferences = await getUserPreferencesByUserId(joinUserId);
 
   return responseFromUser({ user, preferences });
+};
+
+// 로그인한 사용자의 프로필 정보 수정
+export const updateMyProfile = async (userId, data) => {
+  if (!userId) {
+    throw new ValidationError("로그인 상태에서만 수정할 수 있습니다.", { field: "userId" });
+  }
+
+  const { preferences = undefined, ...userFields } = data;
+
+  // 유저 기본 정보 업데이트
+  await updateUser(userId, userFields);
+
+  // 선호 카테고리 교체
+  if (preferences !== undefined) {
+    await replacePreferences(userId, preferences);
+  }
+
+  const user = await getUser(userId);
+  const userPreferences = await getUserPreferencesByUserId(userId);
+
+  return responseFromUser({ user, preferences: userPreferences });
 };

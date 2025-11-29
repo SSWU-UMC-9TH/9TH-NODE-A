@@ -1,13 +1,13 @@
 import { responseFromStore, bodyToCreateStore, responseFromReviews } from "../dtos/store.dto.js";
-import { findFirstUserId, findRegionById } from "../repositories/common.repository.js";
+import { findRegionById } from "../repositories/common.repository.js";
 import { createStore, getAllStoreReviews } from "../repositories/store.repository.js";
 import { MissingUserError, NotFoundError, ValidationError } from "../errors.js";
 
-export const addStoreToRegion = async ({ regionId, body }) => {
+export const addStoreToRegion = async ({ regionId, body, userId }) => {
   const region = await findRegionById(regionId);
   if (!region) throw new NotFoundError("존재하지 않는 지역입니다.", { regionId });
 
-  const userId = await findFirstUserId();
+ 
   if (!userId) throw new MissingUserError();
 
   const payload = bodyToCreateStore(body);
