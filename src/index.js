@@ -101,17 +101,22 @@ app.get("/openapi.json", async (req, res, next) => {
 app.get("/", (req, res) => res.send("UMC Week6"));
 
 // (Week5 → Prisma로 치환한 API)
-app.post("/api/v1/regions/:regionId/stores", createStore); // 1-1
-app.post("/api/v1/stores/:storeId/reviews", createReview); // 1-2
-app.post("/api/v1/stores/:storeId/missions", linkMission); // 1-3
-app.post("/api/v1/missions/:missionId/challenge", challengeMission); // 1-4
+app.post("/api/v1/regions/:regionId/stores", isLogin, createStore); // 1-1
+app.post("/api/v1/stores/:storeId/reviews", isLogin, createReview); // 1-2
+app.post("/api/v1/stores/:storeId/missions", isLogin, linkMission); // 1-3
+app.post("/api/v1/missions/:missionId/challenge", isLogin, challengeMission); // 1-4
 
 // API 엔드포인트
-app.get("/api/v1/users/:userId/reviews", getMyReviews);
-app.get("/api/v1/stores/:storeId/missions", getStoreMissions);
-app.get("/api/v1/users/:userId/missions/in-progress", getMyInProgressMissions);
+app.get("/api/v1/users/:userId/reviews", isLogin, getMyReviews);
+app.get("/api/v1/stores/:storeId/missions", isLogin, getStoreMissions);
+app.get(
+  "/api/v1/users/:userId/missions/in-progress",
+  isLogin,
+  getMyInProgressMissions
+);
 app.patch(
   "/api/v1/users/:userId/missions/:missionId/complete",
+  isLogin,
   completeMission
 );
 
