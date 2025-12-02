@@ -60,12 +60,16 @@ const googleVerify = async (profile) => {
   return { id: safeUser.id, email: safeUser.email, name: safeUser.name };
 };
 
+const callbackURL =
+  process.env.GOOGLE_CALLBACK_URL ||
+  "http://localhost:3000/oauth2/callback/google";
+
 // GoogleStrategy
 export const googleStrategy = new GoogleStrategy(
   {
     clientID: process.env.PASSPORT_GOOGLE_CLIENT_ID,
     clientSecret: process.env.PASSPORT_GOOGLE_CLIENT_SECRET,
-    callbackURL: "/oauth2/callback/google",
+    callbackURL, // 여기서 env 사용
     scope: ["email", "profile"],
   },
 
