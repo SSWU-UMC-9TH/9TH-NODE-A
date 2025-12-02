@@ -108,11 +108,11 @@ export const handleChallengeMission = async (req, res, next) => {
     }
   */
 
-    const userId = parseInt(req.params.userId, 10);
+    const userId = req.user.id;
     const missionId = parseInt(req.body.mission_id, 10);
 
-    if (Number.isNaN(userId) || Number.isNaN(missionId)) {
-        throw new BadRequestError("유효한 사용자 ID와 미션 ID가 필요합니다.");
+    if (Number.isNaN(missionId)) {
+        throw new BadRequestError("유효한 미션 ID가 필요합니다.");
     }
 
     const challengeId = await MissionService.challengeMission(userId, missionId);

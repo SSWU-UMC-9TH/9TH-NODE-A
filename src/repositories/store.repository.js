@@ -44,16 +44,39 @@ export const insertStore = async (regionId, storeData) => {
  * 리뷰 삽입 (review 테이블 구조 반영: mission_id NOT NULL 가정)
  */
 export const insertReview = async (storeId, userId, missionId, rating, content) => {
-    const created = await prisma.review.create({
-        data: {
-            storeId: Number(storeId),
-            userId: Number(userId),
-            missionId: Number(missionId),
-            content: String(content),
-        },
-        select: { id: true },
-    });
-    return created.id;
+  const storeIdNumber   = Number(storeId);
+  const userIdNumber    = Number(userId);
+  const missionIdNumber = Number(missionId);
+
+  if (Number.isNaN(storeIdNumber) || Number.isNaN(userIdNumber) || Number.isNaN(missionIdNumber)) {
+    const e = new Error("B400: invalid ids for review");
+    throw e;
+  }
+
+  const created = await prisma.review.create({
+    data: {
+      rating: Number(rating),
+      content: String(content),
+
+      // 가게 관계
+      store: {
+        connect: { id: storeIdNumber },
+      },
+
+      // 유저 관계
+      user: {
+        connect: { id: userIdNumber },
+      },
+
+      // 미션 관계 
+      mission: {
+        connect: { id: missionIdNumber },
+      },
+    },
+    select: { id: true },
+  });
+
+  return created.id;
 };
 
 // 특정 가게 활성 미션 목록 조회
