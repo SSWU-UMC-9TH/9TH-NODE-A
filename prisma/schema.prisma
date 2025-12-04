@@ -1,0 +1,114 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique(map: "email") @db.VarChar(255)
+  name          String   @db.VarChar(100)
+  gender        String   @db.VarChar(15)
+  birth         DateTime @db.Date
+  address       String   @db.VarChar(255)
+  detailAddress String?  @map("detail_address") @db.VarChar(255)
+  phoneNumber   String   @map("phone_number") @db.VarChar(15)
+
+  reviews             Review[]
+  userMissions        UserMission[]
+  userFavorCategories UserFavorCategory[]
+
+  @@map("user")
+}
+
+model Store {
+  id         Int       @id @default(autoincrement())
+  name       String
+  regionId   Int?
+  address    String?   @db.VarChar(255)
+  categoryId Int?
+  latitude   Float?
+  longitude  Float?
+
+  region   Region?  @relation(fields: [regionId], references: [id])
+  reviews  Review[]
+  missions Mission[]
+}
+
+model Region {
+  id     Int     @id @default(autoincrement())
+  name   String
+  stores Store[]
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  storeId   Int
+  missionId Int
+  rating    Int
+  content   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  store Store @relation(fields: [storeId], references: [id])
+  mission Mission @relation(fields: [missionId], references: [id])
+}
+
+model Mission {
+  id          Int     @id @default(autoincrement())
+  storeId     Int
+  title       String
+  description String?
+  reward      Int?
+  isActive    Boolean @default(true)
+
+  store        Store         @relation(fields: [storeId], references: [id])
+  userMissions UserMission[]
+  reviews      Review[]
+}
+
+enum MissionStatus {
+  ONGOING
+  COMPLETED
+  CANCELED
+}
+
+model UserMission {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  missionId   Int
+  status      MissionStatus @default(ONGOING)
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+
+  user    User    @relation(fields: [userId], references: [id])
+  mission Mission @relation(fields: [missionId], references: [id])
+
+  @@unique([userId, missionId]) // 한 미션은 한 번만 동시 진행
+}
+
+model FoodCategory {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(100)
+
+  userFavorCategories UserFavorCategory[]
+
+  @@map("food_category")
+}
+
+model UserFavorCategory {
+  id             Int          @id @default(autoincrement())
+  user           User         @relation(fields: [userId], references: [id])
+  userId         Int          @map("user_id")
+  foodCategory   FoodCategory @relation(fields: [foodCategoryId], references: [id])
+  foodCategoryId Int          @map("food_category_id")
+
+  @@unique([userId, foodCategoryId])
+  @@index([foodCategoryId], map: "f_category_id")
+  @@index([userId], map: "user_id")
+  @@map("user_favor_category")
+}
