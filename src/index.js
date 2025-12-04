@@ -63,8 +63,7 @@ import {
   handleCompleteMyMission,
 } from "./controllers/mission.controller.js";
 
-
-// 회원가입 API
+// 회원가입 API (로그인 필요 X)
 app.post("/api/v1/users/signup", handleUserSignUp);
 
 // 내 정보 수정 (로그인 필요)
