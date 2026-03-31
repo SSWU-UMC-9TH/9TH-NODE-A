@@ -1,0 +1,13 @@
+# 의존성 폴더 (필수!)
+node_modules
+
+# 로그 파일
+*.log
+
+# 빌드 및 배포 폴더 (TypeScript 등을 사용할 경우)
+/dist
+/build
+
+# 환경 변수 파일 (보안상 필수!)
+.env
+/src/generated/prisma
